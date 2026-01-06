@@ -4,6 +4,8 @@ services:
   db-events:
     image: postgres:15-alpine
     container_name: db-events
+    ports:
+      - "5432:5432" # Accessible sur localhost:5432
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -45,6 +47,8 @@ services:
   db-reservations:
     image: postgres:15-alpine
     container_name: db-reservations
+    ports:
+      - "5433:5432" # Accessible sur localhost:5433
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -80,6 +84,8 @@ services:
   db-users:
     image: postgres:15-alpine
     container_name: db-users
+    ports:
+      - "5434:5432" # Accessible sur localhost:5434
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
