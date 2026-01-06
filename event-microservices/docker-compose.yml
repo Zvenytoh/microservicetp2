@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  db-events:
+    image: postgres:15-alpine
+    container_name: db-events
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: events_db
+    volumes:
+      - events_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d events_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  service-events:
+    build: ./events-service
+    container_name: service-events
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgres://user:password@db-events:5432/events_db
+      - PORT=3001
+    depends_on:
+      db-events:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  service-payments:
+    build: ./payments-service
+    container_name: service-payments
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+    networks:
+      - app-network
+
+  db-reservations:
+    image: postgres:15-alpine
+    container_name: db-reservations
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: reservations_db
+    volumes:
+      - reservations_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d reservations_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  service-reservations:
+    build: ./reservations-service
+    container_name: service-reservations
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgres://user:password@db-reservations:5432/reservations_db
+      - EVENTS_SERVICE_URL=http://service-events:3001
+      - PAYMENTS_SERVICE_URL=http://service-payments:3002
+      - PORT=3003
+    depends_on:
+      db-reservations:
+        condition: service_healthy
+      service-events:
+        condition: service_started
+    networks:
+      - app-network
+
+  db-users:
+    image: postgres:15-alpine
+    container_name: db-users
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    volumes:
+      - users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  service-users:
+    build: ./users-service
+    container_name: service-users
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=postgres://user:password@db-users:5432/users_db
+      - PORT=3004
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      db-users:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  events_data:
+  reservations_data:
+  users_data:

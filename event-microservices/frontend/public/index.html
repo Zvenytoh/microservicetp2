@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventTix</title>
+    <style>
+        :root {
+            --background: #ffffff;
+            --foreground: #09090b;
+            --card: #ffffff;
+            --card-foreground: #09090b;
+            --popover: #ffffff;
+            --popover-foreground: #09090b;
+            --primary: #18181b;
+            --primary-foreground: #fafafa;
+            --secondary: #f4f4f5;
+            --secondary-foreground: #18181b;
+            --muted: #f4f4f5;
+            --muted-foreground: #71717a;
+            --accent: #f4f4f5;
+            --accent-foreground: #18181b;
+            --destructive: #ef4444;
+            --destructive-foreground: #fafafa;
+            --border: #e4e4e7;
+            --input: #e4e4e7;
+            --ring: #18181b;
+            --radius: 0.5rem;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-sans); background-color: var(--background); color: var(--foreground); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+        /* Layout */
+        .container { max-width: 1024px; margin: 0 auto; padding: 2rem 1rem; }
+        header { border-bottom: 1px solid var(--border); padding: 1rem 0; margin-bottom: 2rem; }
+        .header-content { max-width: 1024px; margin: 0 auto; padding: 0 1rem; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; }
+        h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.025em; margin-bottom: 1.5rem; }
+
+        /* Navigation */
+        nav { display: flex; gap: 1rem; align-items: center; }
+        .nav-link { font-size: 0.875rem; font-weight: 500; color: var(--muted-foreground); cursor: pointer; transition: color 0.2s; background: none; border: none; }
+        .nav-link:hover { color: var(--foreground); }
+        .nav-link.active { color: var(--foreground); font-weight: 600; }
+
+        /* Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--card-foreground); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: all 0.2s; display: flex; flex-direction: column; }
+        .card:hover { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .card-header { padding: 1.5rem; padding-bottom: 0; }
+        .card-title { font-weight: 600; font-size: 1.125rem; display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+        .card-content { padding: 1.5rem; flex-grow: 1; }
+        .card-footer { padding: 1.5rem; padding-top: 0; display: flex; gap: 0.5rem; align-items: center; }
+
+        /* Typography & Elements */
+        .text-sm { font-size: 0.875rem; }
+        .text-muted { color: var(--muted-foreground); }
+        .flex-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+        input { width: 100%; height: 2.5rem; padding: 0.5rem 0.75rem; border-radius: var(--radius); border: 1px solid var(--input); background: transparent; font-size: 0.875rem; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: var(--ring); ring: 2px var(--ring); }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; border-radius: var(--radius); font-size: 0.875rem; font-weight: 500; height: 2.5rem; padding: 0 1rem; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+        .btn-secondary:hover { background-color: #e4e4e7; }
+        .btn-outline { border: 1px solid var(--input); background: transparent; }
+        .btn-outline:hover { background-color: var(--accent); }
+        .btn-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
+        .btn-ghost { background: transparent; color: var(--foreground); padding: 0.5rem; height: auto; }
+        .btn-ghost:hover { background-color: var(--accent); }
+        .w-full { width: 100%; }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; border-radius: 9999px; border: 1px solid transparent; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; transition: colors 0.2s; }
+        .badge-active { border-color: transparent; background-color: #dcfce7; color: #166534; }
+        .badge-cancelled { border-color: transparent; background-color: #fee2e2; color: #991b1b; }
+        .badge-postponed { border-color: transparent; background-color: #fef9c3; color: #854d0e; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .icon { width: 16px; height: 16px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+        .modal { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 400px; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+
+        /* Toast */
+        #toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { background: var(--primary); color: var(--primary-foreground); padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.875rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out; display: flex; align-items: center; gap: 0.5rem; }
+        @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+            <svg class="icon" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+            <h1>EventTix</h1>
+        </div>
+        <nav id="nav-auth" class="hidden">
+            <button class="nav-link" onclick="showSection('login')">Connexion</button>
+            <button class="btn btn-primary" onclick="showSection('register')">Inscription</button>
+        </nav>
+        <nav id="nav-user" class="hidden">
+            <button class="nav-link" onclick="showSection('events')">Événements</button>
+            <button class="nav-link" onclick="showSection('my-reservations')">Mes Réservations</button>
+            <button class="nav-link" onclick="showSection('admin')">Admin</button>
+            <div style="width:1px; height:20px; background:var(--border); margin:0 0.5rem;"></div>
+            <span id="user-display" class="text-sm text-muted" style="margin-right:0.5rem;"></span>
+            <button class="btn btn-ghost" onclick="logout()" title="Se déconnecter">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<div id="toast-container"></div>
+
+<!-- MODAL CONFIRMATION -->
+<div id="modal-confirm" class="modal-overlay hidden">
+    <div class="modal">
+        <h3 style="font-size:1.125rem; font-weight:600; margin-bottom:0.5rem;">Gérer l'événement</h3>
+        <p class="text-muted text-sm" id="modal-text">Que souhaitez-vous faire ?</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal()">Fermer</button>
+            <button class="btn btn-secondary" style="background-color:#fef9c3; color:#854d0e;" onclick="confirmAction('postponed')">Reporter</button>
+            <button class="btn btn-destructive" onclick="confirmAction('cancelled')">Annuler l'événement</button>
+        </div>
+    </div>
+</div>
+
+<main class="container">
+    <!-- LOGIN -->
+    <section id="login" class="hidden" style="max-width:400px; margin:0 auto;">
+        <div class="card">
+            <div class="card-header">
+                <h2 style="margin:0;">Bon retour</h2>
+                <p class="text-muted text-sm">Entrez vos identifiants pour accéder à votre compte.</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="nom@exemple.com"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" id="login-password"></div>
+                <button class="btn btn-primary w-full" onclick="login()">Se connecter</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="register" class="hidden" style="max-width:400px; margin:0 auto;">
+        <div class="card">
+            <div class="card-header">
+                <h2 style="margin:0;">Créer un compte</h2>
+                <p class="text-muted text-sm">Rejoignez-nous pour réserver vos places.</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group"><label>Nom d'utilisateur</label><input type="text" id="reg-username" placeholder="Pseudo"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="nom@exemple.com"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" id="reg-password"></div>
+                <button class="btn btn-primary w-full" onclick="register()">S'inscrire</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVENTS LIST -->
+    <section id="events" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2>Événements à venir</h2>
+        </div>
+        <div id="events-list" class="grid"></div>
+    </section>
+
+    <!-- MY RESERVATIONS -->
+    <section id="my-reservations" class="hidden">
+        <h2>Mes Réservations</h2>
+        <div id="reservations-list" class="grid"></div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="admin" class="hidden" style="max-width:600px; margin:0 auto;">
+        <div class="card">
+            <div class="card-header">
+                <h2 style="margin:0;">Publier un événement</h2>
+                <p class="text-muted text-sm">Ajoutez un nouvel événement à la billetterie.</p>
+            </div>
+            <div class="card-content">
+                <div class="form-group"><label>Titre de l'événement</label><input type="text" id="evt-title" placeholder="Ex: Concert de Jazz"></div>
+                <div class="form-group"><label>Date</label><input type="date" id="evt-date"></div>
+                <div class="form-group"><label>Nombre de places</label><input type="number" id="evt-places" placeholder="100"></div>
+                <button class="btn btn-primary w-full" onclick="publishEvent()">Publier l'événement</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    // --- CONFIG & ICONS ---
+    const API_EVENTS = 'http://localhost:3001';
+    const API_RESERVATIONS = 'http://localhost:3003';
+    const API_USERS = 'http://localhost:3004';
+
+    const ICONS = {
+        calendar: '<svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>',
+        ticket: '<svg class="icon" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>',
+        settings: '<svg class="icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+        check: '<svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'
+    };
+
+    let currentUser = null;
+    let token = localStorage.getItem('token');
+    let currentActionId = null; // For modal
+
+    // --- TOAST SYSTEM ---
+    function showToast(msg, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = type === 'success' ? `${ICONS.check} ${msg}` : msg;
+        if(type === 'error') toast.style.background = 'var(--destructive)';
+        container.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 3000);
+    }
+
+    // --- NAVIGATION ---
+    function showSection(id) {
+        document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        if (id === 'events') loadEvents();
+        if (id === 'my-reservations') loadReservations();
+    }
+
+    function updateNav() {
+        if (currentUser) {
+            document.getElementById('nav-auth').classList.add('hidden');
+            document.getElementById('nav-user').classList.remove('hidden');
+            document.getElementById('user-display').innerText = currentUser.username;
+            showSection('events');
+        } else {
+            document.getElementById('nav-auth').classList.remove('hidden');
+            document.getElementById('nav-user').classList.add('hidden');
+            showSection('login');
+        }
+    }
+
+    // --- AUTH ---
+    async function login() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            const res = await fetch(`${API_USERS}/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                token = data.token;
+                currentUser = data.user;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateNav();
+                showToast("Connexion réussie");
+            } else throw new Error(data.error);
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function register() {
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        try {
+            const res = await fetch(`${API_USERS}/register`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            if (res.ok) {
+                showToast("Inscription réussie, connectez-vous !");
+                showSection('login');
+            } else {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function logout() {
+        token = null;
+        currentUser = null;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        updateNav();
+        showToast("Déconnecté");
+    }
+
+    // --- EVENTS ---
+    async function loadEvents() {
+        try {
+            const res = await fetch(`${API_EVENTS}/events`);
+            const events = await res.json();
+            const container = document.getElementById('events-list');
+            container.innerHTML = '';
+
+            events.forEach(ev => {
+                const div = document.createElement('div');
+                div.className = 'card';
+
+                const status = ev.statut || 'active';
+                let badgeClass = 'badge-active';
+                let statusText = 'Actif';
+                if(status === 'cancelled') { badgeClass = 'badge-cancelled'; statusText = 'Annulé'; }
+                if(status === 'postponed') { badgeClass = 'badge-postponed'; statusText = 'Reporté'; }
+
+                const isBookable = ev.places_dispo > 0 && status === 'active';
+
+                div.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>${ev.title}</span>
+                            <span class="badge ${badgeClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="flex-row text-muted text-sm">
+                            ${ICONS.calendar} <span>${ev.date}</span>
+                        </div>
+                        <div class="flex-row text-muted text-sm">
+                            ${ICONS.ticket} <span>${ev.places_dispo} / ${ev.places_totales} places</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        ${isBookable
+                            ? `<button class="btn btn-primary w-full" onclick="book(${ev.id})">Réserver</button>`
+                            : `<button class="btn btn-secondary w-full" disabled>Indisponible</button>`
+                        }
+                        ${currentUser ? `
+                            <button class="btn btn-outline" onclick="openModal(${ev.id})" title="Gérer">
+                                ${ICONS.settings}
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function publishEvent() {
+        const title = document.getElementById('evt-title').value;
+        const date = document.getElementById('evt-date').value;
+        const places_totales = document.getElementById('evt-places').value;
+        try {
+            const res = await fetch(`${API_EVENTS}/events`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, date, places_totales })
+            });
+            if (res.ok) {
+                showToast("Événement publié !");
+                document.getElementById('evt-title').value = '';
+                document.getElementById('evt-date').value = '';
+                document.getElementById('evt-places').value = '';
+                showSection('events');
+            } else {
+                const data = await res.json();
+                throw new Error(data.error || "Erreur création");
+            }
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    // --- MODAL SYSTEM ---
+    function openModal(id) {
+        currentActionId = id;
+        document.getElementById('modal-confirm').classList.remove('hidden');
+    }
+    function closeModal() {
+        document.getElementById('modal-confirm').classList.add('hidden');
+        currentActionId = null;
+    }
+    async function confirmAction(status) {
+        if(!currentActionId) return;
+        try {
+            await fetch(`${API_EVENTS}/events/${currentActionId}/status`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ statut: status })
+            });
+            showToast(`Événement ${status === 'cancelled' ? 'annulé' : 'reporté'}`);
+            closeModal();
+            loadEvents();
+        } catch (e) { showToast("Erreur mise à jour", 'error'); }
+    }
+
+    // --- RESERVATIONS ---
+    async function book(eventId) {
+        if (!currentUser) return showToast("Veuillez vous connecter", 'error');
+        try {
+            const res = await fetch(`${API_RESERVATIONS}/reservations`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId, userId: currentUser.id })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("Réservation confirmée !");
+                loadEvents();
+            } else throw new Error(data.error);
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadReservations() {
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`${API_RESERVATIONS}/reservations/user/${currentUser.id}`);
+            const reservations = await res.json();
+            const container = document.getElementById('reservations-list');
+            container.innerHTML = '';
+            if (reservations.length === 0) container.innerHTML = '<p class="text-muted">Aucune réservation.</p>';
+
+            reservations.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title">Réservation #${r.id}</div>
+                    </div>
+                    <div class="card-content">
+                        <p class="text-sm text-muted">Événement ID: ${r.eventId}</p>
+                        <p class="text-sm text-muted">Date: ${new Date(r.createdAt).toLocaleDateString()}</p>
+                        <div style="margin-top:10px;">
+                            <span class="badge badge-active">Confirmée</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // INIT
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+        updateNav();
+    } else {
+        updateNav();
+    }
+</script>
+
+</body>
+</html>
