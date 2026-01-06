@@ -6,7 +6,7 @@ app.use(express.json());
 app.post('/pay', (req, res) => {
   const { userId, amount, eventId } = req.body;
   
-  console.log(`\n[Payment Service] 💳 Traitement du paiement...`);
+  console.log(`\n[Payment Service] Traitement du paiement...`);
   console.log(`User: ${userId} | Event: ${eventId} | Montant: ${amount}€`);
 
   // Simulation de latence réseau (comme une vraie banque)
@@ -15,14 +15,14 @@ app.post('/pay', (req, res) => {
     const success = Math.random() > 0.2; 
 
     if (success) {
-      console.log(`[Payment Service] ✅ Paiement ACCEPTÉ. Réservation validée.`);
+      console.log(`[Payment Service] Paiement ACCEPTÉ. Réservation validée.`);
       return res.json({ 
         status: "confirmed", 
         transactionId: "TX_" + Date.now(),
         message: "Paiement autorisé, réservation validée."
       });
     } else {
-      console.log(`[Payment Service] ❌ Paiement REFUSÉ. Réservation rejetée.`);
+      console.log(`[Payment Service] Paiement REFUSÉ. Réservation rejetée.`);
       return res.status(402).json({ 
         status: "declined", 
         error: "Fonds insuffisants ou carte refusée." 

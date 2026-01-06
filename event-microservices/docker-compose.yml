@@ -5,7 +5,7 @@ services:
     image: postgres:15-alpine
     container_name: db-events
     ports:
-      - "5432:5432" # Accessible sur localhost:5432
+      - "5432:5432"
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -48,7 +48,7 @@ services:
     image: postgres:15-alpine
     container_name: db-reservations
     ports:
-      - "5433:5432" # Accessible sur localhost:5433
+      - "5433:5432"
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -72,11 +72,16 @@ services:
       - DATABASE_URL=postgres://user:password@db-reservations:5432/reservations_db
       - EVENTS_SERVICE_URL=http://service-events:3001
       - PAYMENTS_SERVICE_URL=http://service-payments:3002
+      - USERS_SERVICE_URL=http://service-users:3004
       - PORT=3003
+      - SMTP_USER=mehdiennajehfr@gmail.com
+      - SMTP_PASS=ujtscejyfebyirko
     depends_on:
       db-reservations:
         condition: service_healthy
       service-events:
+        condition: service_started
+      service-users:
         condition: service_started
     networks:
       - app-network
@@ -85,7 +90,7 @@ services:
     image: postgres:15-alpine
     container_name: db-users
     ports:
-      - "5434:5432" # Accessible sur localhost:5434
+      - "5434:5432"
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
